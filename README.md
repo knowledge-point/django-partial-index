@@ -118,8 +118,31 @@ It is up to you to ensure that the expressions are otherwise valid SQL and have 
 Using [Django's query expressions](https://docs.djangoproject.com/en/1.11/ref/models/expressions/) that check the syntax and generate valid SQL
 for either database is planned for a future version.
 
+To use concurrent index creation in postgres, you should add index in a regular way,
+but after makemigration, change generated migration:
+ - atomic=False,
+ - add arg: concurrently=True
 
+```python
+class Migration(migrations.Migration):
+    atomic = False
+
+    operations = [
+        migrations.AddIndex(
+            model_name='dog',
+            index=partial_index.PartialIndex(
+                fields=[b'id'],
+                name='dog_id_c78984_partial', unique=True,
+                concurrently=True
+            ),
+        ),
+    ]
+
+```
 ## Version History
+
+### 0.4.1.dev
+add Postgres Create Index Concurrently support
 
 ### 0.4.0 (latest)
 * Add support for Django 2.0.

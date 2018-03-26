@@ -6,7 +6,7 @@ from setuptools import setup
 setup(
     name='django-partial-index',
     packages=['partial_index'],
-    version='0.4.0',
+    version='0.4.1.dev',
     description='PostgreSQL and SQLite partial indexes for Django models',
     long_description=open('README.md').read(),
     author='Mattias Linnap',

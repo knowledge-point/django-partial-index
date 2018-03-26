@@ -26,13 +26,16 @@ class PartialIndex(Index):
     # The "partial" suffix is 4 letters longer than the default "idx".
     max_name_length = 34
     sql_create_index = {
-        'postgresql': 'CREATE%(unique)s INDEX %(name)s ON %(table)s%(using)s (%(columns)s)%(extra)s WHERE %(where)s',
+        'postgresql': 'CREATE%(unique)s INDEX%(concurrently)s %(name)s ON %(table)s%(using)s (%(columns)s)%(extra)s WHERE %(where)s;',
         'sqlite': 'CREATE%(unique)s INDEX %(name)s ON %(table)s%(using)s (%(columns)s) WHERE %(where)s',
     }
 
     # Mutable default fields=[] looks wrong, but it's copied from super class.
-    def __init__(self, fields=[], name=None, unique=None, where='', where_postgresql='', where_sqlite=''):
+    def __init__(self, fields=[], name=None, unique=None, where='', where_postgresql='',
+                 where_sqlite='', concurrently=False):
         if unique not in [True, False]:
+            raise ValueError('Unique must be True or False')
+        if concurrently not in [True, False]:
             raise ValueError('Unique must be True or False')
         if where:
             if where_postgresql or where_sqlite:
@@ -44,6 +47,7 @@ class PartialIndex(Index):
                 raise ValueError('If providing a separate where_postgresql and where_sqlite, then they must be different.' +
                                  'If the same expression works for both, just use single where.')
         self.unique = unique
+        self.concurrently = concurrently
         self.where = where
         self.where_postgresql = where_postgresql
         self.where_sqlite = where_sqlite
@@ -99,6 +103,7 @@ class PartialIndex(Index):
 
         # PartialIndex updates:
         parameters['unique'] = ' UNIQUE' if self.unique else ''
+        parameters['concurrently'] = ' CONCURRENTLY' if self.concurrently else ''
         # Note: the WHERE predicate is not yet checked for syntax or field names, and is inserted into the CREATE INDEX query unescaped.
         # This is bad for usability, but is not a security risk, as the string cannot come from user input.
         vendor = self.get_valid_vendor(schema_editor)
